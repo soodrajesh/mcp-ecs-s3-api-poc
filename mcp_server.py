@@ -26,13 +26,14 @@ S3_BUCKET = os.environ.get('S3_BUCKET_NAME')
 
 # Request validation decorator
 
+
 def validate_json(*expected_args):
     def decorator(f):
         @wraps(f)
         def wrapper(*args, **kwargs):
             if not request.is_json:
                 return jsonify({"error": "Content-Type must be application/json"}), 415
-            
+
             data = request.get_json()
             missing = [arg for arg in expected_args if arg not in data]
             if missing:
@@ -40,7 +41,7 @@ def validate_json(*expected_args):
                     "error": f"Missing required parameters: {', '.join(missing)}",
                     "required_parameters": expected_args
                 }), 400
-            
+
             return f(*args, **kwargs)
         return wrapper
     return decorator
@@ -63,7 +64,10 @@ def retry_s3_operation(max_retries=3, delay=1, backoff=2):
                         logger.error(f"S3 operation failed after {max_retries} attempts: {str(e)}")
                         raise
                     
-                    logger.warning(f"S3 operation failed (attempt {retries}/{max_retries}). Retrying in {current_delay} seconds...")
+                    logger.warning(
+                        f"S3 operation failed (attempt {retries}/{max_retries}). "
+                        f"Retrying in {current_delay} seconds..."
+                    )
                     time.sleep(current_delay)
                     current_delay *= backoff
             
@@ -93,6 +97,7 @@ def health_check():
 @app.route('/summarize', methods=['POST'])
 @validate_json('file_key')
 @retry_s3_operation(max_retries=3, delay=1, backoff=2)
+
 def summarize_text():
     """
     Endpoint to summarize text from an S3 file
@@ -112,15 +117,16 @@ def summarize_text():
             # In a real implementation, you would call Amazon Bedrock here
             # For this PoC, we'll just return a simple summary
             summary = (
-                f"Summary for {file_key}: {text[:100]}{'...' if len(text) > 100 else ''}"
+                f"Summary for {file_key}: "
+                f"{text[:100]}{'...' if len(text) > 100 else ''}"
             )
-            
+
             logger.info(f"Successfully processed file: {file_key}")
-            
+
             return jsonify({
-                "file_key": file_key,
+                "status": "success",
                 "summary": summary,
-                "status": "success"
+                "file_key": file_key
             }), 200
             
         except s3_client.exceptions.NoSuchKey:
@@ -133,16 +139,13 @@ def summarize_text():
         except ClientError as e:
             error_code = e.response.get('Error', {}).get('Code', 'UnknownError')
             logger.error(f"S3 error ({error_code}) for file {file_key}: {str(e)}")
-            return jsonify({
-                "error": f"Error accessing file: {error_code}",
-                "status": "error"
-            }), 500
-            
+            raise
+
     except Exception as e:
-        logger.exception(f"Unexpected error in summarize_text: {str(e)}")
+        logger.error(f"Unexpected error in summarize_text: {str(e)}")
         return jsonify({
-            "error": "Internal server error",
-            "status": "error"
+            "status": "error",
+            "error": "Failed to process request"
         }), 500
 
 

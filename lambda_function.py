@@ -12,13 +12,13 @@ def lambda_handler(event, context):
         # Get environment variables
         cluster = os.environ.get('ECS_CLUSTER')
         service = os.environ.get('ECS_SERVICE')
-        
+
         if not all([cluster, service]):
             raise ValueError("Missing required environment variables")
         
         # Initialize ECS client
         ecs = boto3.client('ecs')
-        
+
         # Update the ECS service to ensure it's running
         # Update the ECS service to ensure it's running
         ecs.update_service(
@@ -26,12 +26,12 @@ def lambda_handler(event, context):
             service=service,
             forceNewDeployment=True
         )
-        
+
         return {
             'statusCode': 200,
             'body': json.dumps('Successfully triggered ECS service update')
         }
-        
+
     except Exception as e:
         print(f"Error: {str(e)}")
         raise e
