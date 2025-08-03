@@ -81,14 +81,46 @@ jobs:
       env:
         ECR_IMAGE_URI: ${{ steps.build-image.outputs.image_uri }}
       run: |
-        # Get the task definition
-        TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition ${{ env.ECS_CLUSTER }}-task --region ${{ env.AWS_REGION }})
-        
-        # Update the container definitions with the new image
-        CONTAINER_DEFINITIONS=$(echo $TASK_DEFINITION | jq --arg IMAGE_URI "$ECR_IMAGE_URI" '
-          .taskDefinition.containerDefinitions | 
-          map(if .name == "${{ env.CONTAINER_NAME }}" then . + {image: $IMAGE_URI} else . end)'
-        )
+        # Check if task definition exists
+        if aws ecs describe-task-definition --task-definition ${{ env.ECS_CLUSTER }}-task --region ${{ env.AWS_REGION }} > /dev/null 2>&1; then
+          # Task definition exists, update it
+          echo "Updating existing task definition..."
+          TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition ${{ env.ECS_CLUSTER }}-task --region ${{ env.AWS_REGION }})
+          
+          # Update the container definitions with the new image
+          CONTAINER_DEFINITIONS=$(echo $TASK_DEFINITION | jq --arg IMAGE_URI "$ECR_IMAGE_URI" '
+            .taskDefinition.containerDefinitions | 
+            map(if .name == "${{ env.CONTAINER_NAME }}" then . + {image: $IMAGE_URI} else . end)'
+          )
+        else
+          # Task definition doesn't exist, create a new one
+          echo "Creating new task definition..."
+          CONTAINER_DEFINITIONS=$(cat <<EOL
+          [
+            {
+              "name": "${{ env.CONTAINER_NAME }}",
+              "image": "$ECR_IMAGE_URI",
+              "portMappings": [
+                {
+                  "containerPort": 8080,
+                  "hostPort": 8080,
+                  "protocol": "tcp"
+                }
+              ],
+              "essential": true,
+              "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                  "awslogs-group": "/ecs/${{ env.ECS_CLUSTER }}",
+                  "awslogs-region": "${{ env.AWS_REGION }}",
+                  "awslogs-stream-prefix": "ecs"
+                }
+              }
+            }
+          ]
+          EOL
+          )
+        fi
         
         # Register new task definition
         aws ecs register-task-definition \
@@ -101,10 +133,25 @@ jobs:
           --requires-compatibilities FARGATE \
           --region ${{ env.AWS_REGION }}
         
-        # Update the service
-        aws ecs update-service \
-          --cluster ${{ env.ECS_CLUSTER }} \
-          --service ${{ env.ECS_SERVICE }} \
-          --task-definition ${{ env.ECS_CLUSTER }}-task \
-          --force-new-deployment \
-          --region ${{ env.AWS_REGION }}
+        # Check if service exists
+        if aws ecs describe-services --cluster ${{ env.ECS_CLUSTER }} --services ${{ env.ECS_SERVICE }} --region ${{ env.AWS_REGION }} | grep -q "MISSING"; then
+          # Service doesn't exist, create it
+          echo "Creating new ECS service..."
+          aws ecs create-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service-name ${{ env.ECS_SERVICE }} \
+            --task-definition ${{ env.ECS_CLUSTER }}-task \
+            --launch-type FARGATE \
+            --desired-count 1 \
+            --network-configuration "awsvpcConfiguration={subnets=[subnet-12345678,subnet-87654321],securityGroups=[sg-12345678],assignPublicIp=ENABLED}" \
+            --region ${{ env.AWS_REGION }}
+        else
+          # Service exists, update it
+          echo "Updating existing ECS service..."
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service ${{ env.ECS_SERVICE }} \
+            --task-definition ${{ env.ECS_CLUSTER }}-task \
+            --force-new-deployment \
+            --region ${{ env.AWS_REGION }}
+        fi
