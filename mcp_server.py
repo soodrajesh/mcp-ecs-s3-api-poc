@@ -78,22 +78,31 @@ def retry_s3_operation(max_retries=3, delay=1, backoff=2):
     return decorator
 
 
-@app.route('/health', methods=['GET'])
-def health_check():
-    """Health check endpoint with basic service status"""
+def check_health():
+    """Check the health of the service.
+    
+    Returns:
+        tuple: A tuple of (dict, int) containing the status and HTTP status code
+    """
     try:
         # Add additional health checks here (e.g., database connection)
-        return jsonify({
+        return {
             "status": "healthy",
             "service": "mcp-server",
             "version": "1.0.0"
-        }), 200
+        }, 200
     except Exception as e:
         logger.error(f"Health check failed: {str(e)}")
-        return jsonify({
+        return {
             "status": "unhealthy",
             "error": str(e)
-        }), 500
+        }, 500
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    """Health check endpoint with basic service status"""
+    response, status_code = check_health()
+    return jsonify(response), status_code
 
 
 @app.route("/summarize", methods=["POST"])
