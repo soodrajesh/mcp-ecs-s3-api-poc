@@ -1,0 +1,23 @@
+# AWS Configuration
+aws_region = "eu-west-1"
+aws_profile = "raj-private"
+
+# Project Configuration
+project_name = "mcp"
+environment = "dev"
+
+# VPC Configuration
+vpc_id = "vpc-011e66b8e1b66cf82"
+private_subnet_ids = [
+  "subnet-0fc1f8aa9fbe3fdda",
+  "subnet-049089cd5e6586ffd",
+  "subnet-0adbeb3ce3ba0d644"
+]
+
+# ECS Configuration
+ecs_task_cpu = 256
+ecs_task_memory = 512
+container_port = 8080
+
+# Container Image
+container_image = "your-ecr-repo/mcp-server:latest"

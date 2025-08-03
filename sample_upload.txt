@@ -1,0 +1,23 @@
+The Model Context Protocol (MCP) is an innovative approach to managing and interacting with AI models in a standardized way. This document provides a comprehensive overview of the protocol, its components, and how it can be implemented in various environments.
+
+Key Features:
+- Standardized model interaction
+- Version control for model artifacts
+- Metadata management
+- Scalable deployment options
+
+Use Cases:
+1. AI model deployment
+2. Model versioning and management
+3. A/B testing of different model versions
+4. Federated learning scenarios
+
+This sample document is designed to test the MCP server's ability to process and summarize text content. When uploaded to the designated S3 bucket, the Lambda function should trigger the ECS service to process this file and generate a summary.
+
+Additional content to ensure the file has sufficient length for meaningful summarization. The MCP server is configured to return a truncated version of the content as a simple demonstration of its functionality. In a production environment, this would be replaced with actual model inference calls to services like Amazon Bedrock.
+
+To test the end-to-end flow:
+1. Upload this file to the S3 bucket
+2. The Lambda function will trigger and ensure the ECS service is running
+3. The ECS service will process the file and generate a summary
+4. You can then query the MCP server's /summarize endpoint with the file key to get the summary
