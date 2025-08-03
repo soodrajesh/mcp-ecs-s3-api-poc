@@ -137,10 +137,10 @@ jobs:
           echo "WARNING: Using placeholder values for subnets and security groups. Please update with your actual VPC configuration."
           
           # Replace these with your actual subnet and security group IDs
-          SUBNET1="subnet-12345678"  # Replace with your public subnet ID
-          SUBNET2="subnet-87654321"  # Replace with your second public subnet ID
-          SECURITY_GROUP="sg-12345678"  # Replace with your security group ID
-          
+          SUBNET1="subnet-0fc1f8aa9fbe3fdda"  # Replace with your public subnet ID
+          SUBNET2="subnet-049089cd5e6586ffd"  # Replace with your second public subnet ID
+          SECURITY_GROUP="sg-0ea4277211a49f8ec"  # Replace with your security group ID
+  
           aws ecs create-service \
             --cluster ${{ env.ECS_CLUSTER }} \
             --service-name ${{ env.ECS_SERVICE }} \
