@@ -23,7 +23,7 @@ resource "aws_ecs_task_definition" "mcp_task" {
 
   container_definitions = jsonencode([
     {
-      name      = "mcp-dev-mcp-server"
+      name      = "mcp-server"
       image     = var.container_image
       essential = true
       portMappings = [
@@ -75,7 +75,7 @@ resource "aws_ecs_service" "mcp_service" {
 
   load_balancer {
     target_group_arn = aws_lb_target_group.mcp_tg.arn
-    container_name   = "mcp-dev-mcp-server"
+    container_name   = "mcp-server"
     container_port   = var.container_port
   }
 
