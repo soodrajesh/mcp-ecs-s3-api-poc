@@ -61,7 +61,7 @@ variable "container_port" {
 variable "container_image" {
   description = "Container image to use for the MCP server"
   type        = string
-  default     = "your-ecr-repo/mcp-server:latest"
+  default     = "mcp-dev-mcp-server:latest"
 }
 
 variable "tags" {

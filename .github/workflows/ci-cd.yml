@@ -11,7 +11,7 @@ env:
   ECR_REPOSITORY: mcp-dev-mcp-server
   ECS_SERVICE: mcp-dev-service
   ECS_CLUSTER: mcp-dev-cluster
-  CONTAINER_NAME: mcp-server
+  CONTAINER_NAME: mcp-dev-mcp-server
 
 jobs:
   test:

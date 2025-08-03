@@ -20,4 +20,4 @@ ecs_task_memory = 512
 container_port = 8080
 
 # Container Image
-container_image = "your-ecr-repo/mcp-server:latest"
+container_image = "212684282740.dkr.ecr.eu-west-1.amazonaws.com/mcp-dev-mcp-server:latest"
