@@ -69,7 +69,7 @@ def retry_s3_operation(max_retries=3, delay=1, backoff=2):
             
             raise Exception("Max retries exceeded")
         return wrapper
-    return wrapper
+    return decorator
 
 
 @app.route('/health', methods=['GET'])
