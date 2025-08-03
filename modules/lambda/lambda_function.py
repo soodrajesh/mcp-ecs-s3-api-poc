@@ -13,7 +13,7 @@ def lambda_handler(event, context):
 
     # Initialize ECS client
     ecs = boto3.client('ecs', region_name=region)
-    
+
     try:
         # Update the ECS service to force a new deployment
         ecs.update_service(

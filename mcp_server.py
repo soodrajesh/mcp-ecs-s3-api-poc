@@ -54,7 +54,7 @@ def retry_s3_operation(max_retries=3, delay=1, backoff=2):
         def wrapper(*args, **kwargs):
             retries = 0
             current_delay = delay
-            
+
             while retries < max_retries:
                 try:
                     return f(*args, **kwargs)
@@ -63,14 +63,14 @@ def retry_s3_operation(max_retries=3, delay=1, backoff=2):
                     if retries == max_retries:
                         logger.error(f"S3 operation failed after {max_retries} attempts: {str(e)}")
                         raise
-                    
+
                     logger.warning(
                         f"S3 operation failed (attempt {retries}/{max_retries}). "
                         f"Retrying in {current_delay} seconds..."
                     )
                     time.sleep(current_delay)
                     current_delay *= backoff
-            
+
             raise Exception("Max retries exceeded")
         return wrapper
     return decorator
@@ -97,7 +97,6 @@ def health_check():
 @app.route('/summarize', methods=['POST'])
 @validate_json('file_key')
 @retry_s3_operation(max_retries=3, delay=1, backoff=2)
-
 def summarize_text():
     """
     Endpoint to summarize text from an S3 file
@@ -122,13 +121,12 @@ def summarize_text():
             )
 
             logger.info(f"Successfully processed file: {file_key}")
-
             return jsonify({
                 "status": "success",
                 "summary": summary,
                 "file_key": file_key
             }), 200
-            
+
         except s3_client.exceptions.NoSuchKey:
             logger.error(f"File not found in S3: {file_key}")
             return jsonify({

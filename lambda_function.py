@@ -15,7 +15,7 @@ def lambda_handler(event, context):
 
         if not all([cluster, service]):
             raise ValueError("Missing required environment variables")
-        
+
         # Initialize ECS client
         ecs = boto3.client('ecs')
 
