@@ -152,10 +152,34 @@ jobs:
         else
           # Service exists, update it
           echo "Updating existing ECS service..."
+          
+          # First, stop any existing tasks to ensure a clean deployment
+          TASKS=$(aws ecs list-tasks --cluster ${{ env.ECS_CLUSTER }} --service-name ${{ env.ECS_SERVICE }} --region ${{ env.AWS_REGION }} | jq -r '.taskArns | .[]')
+          if [ ! -z "$TASKS" ]; then
+            echo "Stopping existing tasks..."
+            for TASK in $TASKS; do
+              aws ecs stop-task --cluster ${{ env.ECS_CLUSTER }} --task $TASK --region ${{ env.AWS_REGION }}
+            done
+            # Wait for tasks to stop
+            echo "Waiting for tasks to stop..."
+            sleep 30
+          fi
+          
+          # Update the service with the new task definition
+          echo "Updating service with new task definition..."
           aws ecs update-service \
             --cluster ${{ env.ECS_CLUSTER }} \
             --service ${{ env.ECS_SERVICE }} \
             --task-definition ${{ env.ECS_CLUSTER }}-task \
             --force-new-deployment \
             --region ${{ env.AWS_REGION }}
+            
+          # Wait for the service to stabilize
+          echo "Waiting for service to stabilize..."
+          aws ecs wait services-stable \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.ECS_SERVICE }} \
+            --region ${{ env.AWS_REGION }}
+          
+          echo "Service update complete."
         fi
