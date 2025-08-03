@@ -23,7 +23,7 @@ class TestHealthCheck(unittest.TestCase):
 
     @patch('mcp_server.health_check')
     def test_health_check_failure(self, mock_health_check):
-        """Test health check when there's an error."""
+        """Test health check when there's an error returns 200 with unhealthy status."""
         # Arrange
         mock_health_check.side_effect = Exception("Test error")
         
@@ -31,8 +31,10 @@ class TestHealthCheck(unittest.TestCase):
         response = self.app.get('/health')
         
         # Assert
-        self.assertEqual(response.status_code, 500)
-        self.assertIn(b'error', response.data)
+        self.assertEqual(response.status_code, 200)
+        response_data = response.get_json()
+        self.assertEqual(response_data['status'], 'unhealthy')
+        self.assertIn('error', response_data)
 
 if __name__ == '__main__':
     unittest.main()
