@@ -88,9 +88,9 @@ jobs:
           TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition ${{ env.ECS_CLUSTER }}-task --region ${{ env.AWS_REGION }})
           
           # Update the container definitions with the new image
-          CONTAINER_DEFINITIONS=$(echo $TASK_DEFINITION | jq --arg IMAGE_URI "$ECR_IMAGE_URI" '
+          CONTAINER_DEFINITIONS=$(echo $TASK_DEFINITION | jq --arg IMAGE_URI "$ECR_IMAGE_URI" --arg CONTAINER_NAME "${{ env.CONTAINER_NAME }}" '
             .taskDefinition.containerDefinitions | 
-            map(if .name == "${{ env.CONTAINER_NAME }}" then . + {image: $IMAGE_URI} else . end)'
+            map(if .name == $CONTAINER_NAME then . + {image: $IMAGE_URI} else . end)'
           )
         else
           # Task definition doesn't exist, create a new one
