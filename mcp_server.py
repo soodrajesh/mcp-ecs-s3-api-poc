@@ -101,8 +101,15 @@ def check_health():
 @app.route('/health', methods=['GET'])
 def health_check():
     """Health check endpoint with basic service status"""
-    response, status_code = check_health()
-    return jsonify(response), status_code
+    try:
+        response, status_code = check_health()
+        return jsonify(response), status_code
+    except Exception as e:
+        logger.error(f"Health check failed: {str(e)}")
+        return jsonify({
+            "status": "unhealthy",
+            "error": str(e)
+        }), 500
 
 
 @app.route("/summarize", methods=["POST"])
