@@ -12,7 +12,7 @@ def lambda_handler(event, context):
     region = os.environ['REGION']
 
     # Initialize ECS client
-    ecs = boto3.client('ecs', region_name=region)
+    ecs = boto3.client("ecs", region_name=region)
 
     try:
         # Update the ECS service to force a new deployment
@@ -27,8 +27,8 @@ def lambda_handler(event, context):
             f"in cluster {ecs_cluster}"
         )
         return {
-            'statusCode': 200,
-            'body': f"Successfully triggered update for service {ecs_service}"
+            "statusCode": 200,
+            "body": f"Successfully triggered update for service {ecs_service}",
         }
 
     except Exception as e:

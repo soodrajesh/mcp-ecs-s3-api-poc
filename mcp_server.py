@@ -61,7 +61,9 @@ def retry_s3_operation(max_retries=3, delay=1, backoff=2):
                 except ClientError as e:
                     retries += 1
                     if retries == max_retries:
-                        logger.error(f"S3 operation failed after {max_retries} attempts: {str(e)}")
+                        logger.error(
+                            f"S3 operation failed after {max_retries} attempts: {str(e)}"
+                        )
                         raise
 
                     logger.warning(
@@ -94,8 +96,8 @@ def health_check():
         }), 500
 
 
-@app.route('/summarize', methods=['POST'])
-@validate_json('file_key')
+@app.route("/summarize", methods=["POST"])
+@validate_json("file_key")
 @retry_s3_operation(max_retries=3, delay=1, backoff=2)
 def summarize_text():
     """
@@ -105,20 +107,17 @@ def summarize_text():
     try:
         data = request.get_json()
         file_key = data['file_key']  # Already validated by decorator
-        
+
         logger.info(f"Processing summarization request for file: {file_key}")
-        
+
         # Get file from S3 with retry logic
         try:
             response = s3_client.get_object(Bucket=S3_BUCKET, Key=file_key)
             text = response['Body'].read().decode('utf-8')
-            
+
             # In a real implementation, you would call Amazon Bedrock here
             # For this PoC, we'll just return a simple summary
-            summary = (
-                f"Summary for {file_key}: "
-                f"{text[:100]}{'...' if len(text) > 100 else ''}"
-            )
+            summary = f"Summary for {file_key}: " f"{text[:100]}{'...' if len(text) > 100 else ''}"
 
             logger.info(f"Successfully processed file: {file_key}")
             return jsonify({
@@ -133,7 +132,7 @@ def summarize_text():
                 "error": f"File not found: {file_key}",
                 "status": "error"
             }), 404
-            
+
         except ClientError as e:
             error_code = e.response.get('Error', {}).get('Code', 'UnknownError')
             logger.error(f"S3 error ({error_code}) for file {file_key}: {str(e)}")

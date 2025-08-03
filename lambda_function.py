@@ -28,8 +28,8 @@ def lambda_handler(event, context):
         )
 
         return {
-            'statusCode': 200,
-            'body': json.dumps('Successfully triggered ECS service update')
+            "statusCode": 200,
+            "body": json.dumps("Successfully triggered ECS service update"),
         }
 
     except Exception as e:
