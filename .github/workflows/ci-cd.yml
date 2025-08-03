@@ -95,11 +95,10 @@ jobs:
         else
           # Task definition doesn't exist, create a new one
           echo "Creating new task definition..."
-          CONTAINER_DEFINITIONS=$(cat <<EOL
-          [
+          CONTAINER_DEFINITIONS='[
             {
-              "name": "${{ env.CONTAINER_NAME }}",
-              "image": "$ECR_IMAGE_URI",
+              "name": "'${{ env.CONTAINER_NAME }}'",
+              "image": "'$ECR_IMAGE_URI'",
               "portMappings": [
                 {
                   "containerPort": 8080,
@@ -111,15 +110,13 @@ jobs:
               "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
-                  "awslogs-group": "/ecs/${{ env.ECS_CLUSTER }}",
-                  "awslogs-region": "${{ env.AWS_REGION }}",
+                  "awslogs-group": "/ecs/'${{ env.ECS_CLUSTER }}'",
+                  "awslogs-region": "'${{ env.AWS_REGION }}'",
                   "awslogs-stream-prefix": "ecs"
                 }
               }
             }
-          ]
-          EOL
-          )
+          ]'
         fi
         
         # Register new task definition
@@ -137,13 +134,20 @@ jobs:
         if aws ecs describe-services --cluster ${{ env.ECS_CLUSTER }} --services ${{ env.ECS_SERVICE }} --region ${{ env.AWS_REGION }} | grep -q "MISSING"; then
           # Service doesn't exist, create it
           echo "Creating new ECS service..."
+          echo "WARNING: Using placeholder values for subnets and security groups. Please update with your actual VPC configuration."
+          
+          # Replace these with your actual subnet and security group IDs
+          SUBNET1="subnet-12345678"  # Replace with your public subnet ID
+          SUBNET2="subnet-87654321"  # Replace with your second public subnet ID
+          SECURITY_GROUP="sg-12345678"  # Replace with your security group ID
+          
           aws ecs create-service \
             --cluster ${{ env.ECS_CLUSTER }} \
             --service-name ${{ env.ECS_SERVICE }} \
             --task-definition ${{ env.ECS_CLUSTER }}-task \
             --launch-type FARGATE \
             --desired-count 1 \
-            --network-configuration "awsvpcConfiguration={subnets=[subnet-12345678,subnet-87654321],securityGroups=[sg-12345678],assignPublicIp=ENABLED}" \
+            --network-configuration "awsvpcConfiguration={subnets=[$SUBNET1,$SUBNET2],securityGroups=[$SECURITY_GROUP],assignPublicIp=ENABLED}" \
             --region ${{ env.AWS_REGION }}
         else
           # Service exists, update it
