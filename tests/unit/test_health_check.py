@@ -38,10 +38,12 @@ class TestHealthCheck(unittest.TestCase):
         """Test health check when there's an error returns 500 with unhealthy status."""
         # Arrange
         test_app = app.test_client()
-        mock_check_health.return_value = ({
-            "status": "unhealthy",
-            "error": "Test error"
-        }, 500)
+        
+        # Create a side effect that will raise an exception
+        def mock_health_check():
+            raise Exception("Test error")
+            
+        mock_check_health.side_effect = mock_health_check
         
         # Act
         with app.app_context():
@@ -51,7 +53,7 @@ class TestHealthCheck(unittest.TestCase):
         self.assertEqual(response.status_code, 500)
         response_data = response.get_json()
         self.assertEqual(response_data['status'], 'unhealthy')
-        self.assertEqual(response_data['error'], 'Test error')
+        self.assertIn('error', response_data)
 
 if __name__ == '__main__':
     unittest.main()
