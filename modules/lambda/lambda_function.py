@@ -1,6 +1,7 @@
 import boto3
 import os
 
+
 def lambda_handler(event, context):
     """
     Lambda function to trigger ECS service update when a new file is uploaded to S3.
@@ -15,7 +16,7 @@ def lambda_handler(event, context):
     
     try:
         # Update the ECS service to force a new deployment
-        response = ecs.update_service(
+        ecs.update_service(
             cluster=ecs_cluster,
             service=ecs_service,
             forceNewDeployment=True

@@ -2,6 +2,7 @@ import boto3
 import json
 import os
 
+
 def lambda_handler(event, context):
     """
     Lambda function that gets triggered when a new file is uploaded to S3.
@@ -19,7 +20,8 @@ def lambda_handler(event, context):
         ecs = boto3.client('ecs')
         
         # Update the ECS service to ensure it's running
-        response = ecs.update_service(
+        # Update the ECS service to ensure it's running
+        ecs.update_service(
             cluster=cluster,
             service=service,
             forceNewDeployment=True

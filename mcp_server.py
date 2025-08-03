@@ -13,7 +13,8 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 # Initialize S3 client with retry configuration
-s3_client = boto3.client('s3', 
+s3_client = boto3.client(
+    's3',
     config=boto3.session.Config(
         retries={
             'max_attempts': 3,
@@ -24,6 +25,7 @@ s3_client = boto3.client('s3',
 S3_BUCKET = os.environ.get('S3_BUCKET_NAME')
 
 # Request validation decorator
+
 def validate_json(*expected_args):
     def decorator(f):
         @wraps(f)
@@ -42,6 +44,7 @@ def validate_json(*expected_args):
             return f(*args, **kwargs)
         return wrapper
     return decorator
+
 
 # Retry decorator for S3 operations
 def retry_s3_operation(max_retries=3, delay=1, backoff=2):
@@ -66,7 +69,8 @@ def retry_s3_operation(max_retries=3, delay=1, backoff=2):
             
             raise Exception("Max retries exceeded")
         return wrapper
-    return decorator
+    return wrapper
+
 
 @app.route('/health', methods=['GET'])
 def health_check():
@@ -84,6 +88,7 @@ def health_check():
             "status": "unhealthy",
             "error": str(e)
         }), 500
+
 
 @app.route('/summarize', methods=['POST'])
 @validate_json('file_key')
@@ -106,7 +111,9 @@ def summarize_text():
             
             # In a real implementation, you would call Amazon Bedrock here
             # For this PoC, we'll just return a simple summary
-            summary = f"Summary for {file_key}: {text[:100]}{'...' if len(text) > 100 else ''}"
+            summary = (
+                f"Summary for {file_key}: {text[:100]}{'...' if len(text) > 100 else ''}"
+            )
             
             logger.info(f"Successfully processed file: {file_key}")
             
@@ -138,14 +145,17 @@ def summarize_text():
             "status": "error"
         }), 500
 
+
 # Error handlers
 @app.errorhandler(404)
 def not_found_error(error):
-    return jsonify({"error": "Not found", "status": "error"}), 404
+    return jsonify({"error": "Not found"}), 404
+
 
 @app.errorhandler(500)
 def internal_error(error):
-    return jsonify({"error": "Internal server error", "status": "error"}), 500
+    return jsonify({"error": "Internal server error"}), 500
+
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8080))

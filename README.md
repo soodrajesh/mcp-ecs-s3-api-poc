@@ -358,9 +358,89 @@ docker rmi $(docker images mcp-server -q)
 - **S3 Lifecycle Rules**: Automatically transition files to cheaper storage classes
 - **Scheduled Scaling**: Scale down non-production environments during off-hours
 
-## 🚀 Deployment Pipeline (CI/CD)
+## 🚀 CI/CD Pipeline
 
-The project includes GitHub Actions workflow for automated deployments:
+This project uses GitHub Actions for continuous integration and deployment. The pipeline includes testing, building, and deploying the MCP server to AWS ECS.
+
+### Prerequisites
+
+1. **GitHub Repository**: Ensure your code is pushed to a GitHub repository
+2. **AWS Account**: With appropriate IAM permissions
+3. **AWS IAM Roles**:
+   - A role for GitHub Actions to deploy to AWS
+   - An ECS task execution role
+
+### Setup Instructions
+
+#### 1. Configure GitHub Secrets
+
+Add the following secrets to your GitHub repository (Settings > Secrets > Actions):
+
+1. `AWS_ROLE_ARN`: ARN of the IAM role for GitHub Actions
+   ```bash
+   aws iam get-role --role-name GitHubActionsDeployRole --query 'Role.Arn' --output text
+   ```
+
+2. `ECS_TASK_EXECUTION_ROLE_ARN`: ARN of the ECS task execution role
+   ```bash
+   aws iam get-role --role-name ecsTaskExecutionRole --query 'Role.Arn' --output text
+   ```
+
+3. `API_KEY`: API key for the MCP server
+   ```bash
+   terraform output -raw api_key
+   ```
+
+#### 2. GitHub Actions Workflow
+
+The workflow is defined in `.github/workflows/ci-cd.yml` and includes:
+
+- **Test**: Linting, formatting, and unit tests on every push
+- **Deploy**: Build and push Docker image, update ECS service (only on `main` branch)
+
+#### 3. Manual Deployment
+
+To trigger a manual deployment:
+
+1. Merge your changes to the `main` branch
+2. Or create a new release with a version tag (e.g., `v1.0.0`)
+
+#### 4. Monitoring Deployments
+
+- **GitHub Actions**: View workflow runs in the "Actions" tab
+- **AWS ECS**: Monitor service deployments in the ECS console
+- **CloudWatch**: Check logs and metrics for the ECS service
+
+### Customization
+
+You can customize the CI/CD pipeline by editing `.github/workflows/ci-cd.yml`:
+
+- **Environment Variables**: Update the `env` section at the top of the file
+- **Build Arguments**: Modify the Docker build step if needed
+- **Deployment Strategy**: Adjust the ECS deployment configuration
+
+### Troubleshooting
+
+#### Workflow Fails on Push
+- Check the GitHub Actions logs for specific error messages
+- Verify that all required secrets are set correctly
+- Ensure the IAM roles have the necessary permissions
+
+#### Deployment Fails
+- Check ECS service events in the AWS Console
+- Verify that the ECR repository exists and is accessible
+- Ensure the task definition is valid and all required parameters are set
+
+### Security Best Practices
+
+1. **Least Privilege**: IAM roles should have the minimum permissions required
+2. **Secrets Management**: Never commit sensitive information to version control
+3. **Dependency Updates**: Regularly update dependencies to include security patches
+4. **Code Scanning**: Enable GitHub's code scanning for security vulnerabilities
+
+## 🚀 Deployment Pipeline (Legacy)
+
+The project also supports manual deployments using Terraform:
 
 1. **On push to main branch**:
    - Build and test the MCP server
