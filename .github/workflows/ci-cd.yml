@@ -165,12 +165,23 @@ jobs:
             sleep 30
           fi
           
-          # Update the service with the new task definition
-          echo "Updating service with new task definition..."
+          # First, describe the current service to get the current configuration
+          echo "Getting current service configuration..."
+          SERVICE_DESCRIPTION=$(aws ecs describe-services \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.ECS_SERVICE }} \
+            --region ${{ env.AWS_REGION }})
+            
+          # Extract the current network configuration
+          NETWORK_CONFIG=$(echo $SERVICE_DESCRIPTION | jq -r '.services[0].networkConfiguration')
+          
+          # Update the service with the new task definition and ensure the container name is correct
+          echo "Updating service with new task definition and container name..."
           aws ecs update-service \
             --cluster ${{ env.ECS_CLUSTER }} \
             --service ${{ env.ECS_SERVICE }} \
             --task-definition ${{ env.ECS_CLUSTER }}-task \
+            --network-configuration "$NETWORK_CONFIG" \
             --force-new-deployment \
             --region ${{ env.AWS_REGION }}
             

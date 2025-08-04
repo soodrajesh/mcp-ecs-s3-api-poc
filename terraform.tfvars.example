@@ -1,10 +1,10 @@
 # AWS Configuration
-aws_region = "eu-west-1"
+aws_region  = "eu-west-1"
 aws_profile = "raj-private"
 
 # Project Configuration
-project_name = "mcp"
-environment = "dev"
+project_name = "mcp-s3-poc"  # Should match the default in variables.tf
+environment  = "dev"
 
 # VPC Configuration
 vpc_id = "vpc-011e66b8e1b66cf82"
@@ -13,11 +13,28 @@ private_subnet_ids = [
   "subnet-049089cd5e6586ffd",
   "subnet-0adbeb3ce3ba0d644"
 ]
+public_subnet_ids = [
+  "subnet-0fc1f8aa9fbe3fdda",
+  "subnet-049089cd5e6586ffd",
+  "subnet-0adbeb3ce3ba0d644"
+]
 
 # ECS Configuration
-ecs_task_cpu = 256
+ecs_task_cpu    = 256
 ecs_task_memory = 512
-container_port = 8080
+container_port  = 8080
+container_image = "your-ecr-repo/your-image:tag"  # Update with your ECR repo/image
 
-# Container Image
-container_image = "212684282740.dkr.ecr.eu-west-1.amazonaws.com/mcp-dev-mcp-server:latest"
+# S3 Configuration
+s3_bucket_name = "your-unique-bucket-name"  # Must be globally unique
+
+# ALB Configuration
+alb_internal = true
+alb_ingress_cidr_blocks = ["0.0.0.0/0"]  # Restrict this in production
+
+# Tags
+tags = {
+  Environment = "dev"
+  Project     = "mcp-s3-poc"
+  ManagedBy   = "terraform"
+}

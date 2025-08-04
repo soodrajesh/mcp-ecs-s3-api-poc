@@ -43,11 +43,23 @@ cd mcp-s3-poc
 ```
 
 ### 2. Configure Environment Variables
-Copy the example environment file and update the values:
-```bash
-cp .env.example .env
-# Edit .env with your configuration
-```
+
+1. Copy the example environment file and update the values:
+   ```bash
+   cp .env.example .env
+   # Edit .env with your configuration
+   ```
+
+2. Copy the Terraform variables example file and update with your configuration:
+   ```bash
+   cp terraform.tfvars.example terraform.tfvars
+   # Edit terraform.tfvars with your AWS account and region details
+   ```
+   
+   Ensure the `container_image` variable in `terraform.tfvars` uses the correct ECR repository URI format:
+   ```hcl
+   container_image = "<your-account-id>.dkr.ecr.<region>.amazonaws.com/mcp-dev-mcp-server:latest"
+   ```
 
 ### 3. Build and Push Docker Image
 ```bash
@@ -158,6 +170,27 @@ Rebuild the Docker image with the correct platform:
 docker build -t mcp-server -f Dockerfile.mcp --platform linux/amd64 .
 # Tag and push to ECR
 ```
+
+### 6. Container Name Mismatch in ECS Service
+
+**Symptom**: ECS service fails to start with errors about container name not matching task definition.
+
+**Solution**:
+1. Ensure the container name in the ECS task definition matches the name used in the load balancer configuration
+2. The container name is set to `mcp-dev-mcp-server` by default in the Terraform configuration
+3. Verify the container name in the ECS service's load balancer configuration matches exactly with the task definition
+
+### 7. Incorrect ECR Image URI
+
+**Symptom**: ECS tasks fail to start with "CannotPullContainerError" or similar image pull errors.
+
+**Solution**:
+1. Verify the `container_image` variable in your `terraform.tfvars` file uses the correct ECR repository URI format:
+   ```hcl
+   container_image = "<account-id>.dkr.ecr.<region>.amazonaws.com/<repository-name>:<tag>"
+   ```
+2. Ensure the ECS task execution role has permissions to pull from the ECR repository
+3. Check that the image tag exists in the ECR repository
 
 ## 🧪 Testing the MCP Server
 
