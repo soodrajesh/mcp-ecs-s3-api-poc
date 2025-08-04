@@ -1,0 +1,40 @@
+{
+  "containerDefinitions": [
+    {
+      "name": "mcp-server",
+      "image": "212684282740.dkr.ecr.eu-west-1.amazonaws.com/mcp-dev-mcp-server:cdd9aaef2ed5c75f7b6f81e4a7ee8e3e025da272",
+      "cpu": 0,
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "hostPort": 8080,
+          "protocol": "tcp"
+        }
+      ],
+      "essential": true,
+      "environment": [],
+      "mountPoints": [],
+      "volumesFrom": [],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/mcp-dev-cluster",
+          "awslogs-region": "eu-west-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "systemControls": []
+    }
+  ],
+  "family": "mcp-dev-cluster-task",
+  "executionRoleArn": "arn:aws:iam::212684282740:role/mcp-ecs-task-role",
+  "networkMode": "awsvpc",
+  "volumes": [],
+  "placementConstraints": [],
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "cpu": "256",
+  "memory": "512",
+  "taskRoleArn": "arn:aws:iam::212684282740:role/mcp-ecs-task-role"
+}

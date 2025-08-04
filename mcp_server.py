@@ -6,11 +6,21 @@ from flask import Flask, request, jsonify
 from botocore.exceptions import ClientError
 from functools import wraps
 
+print("=== MCP SERVER CONTAINER CODE VERSION: GET /summarize/<filename> ROUTE PRESENT ===")
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+
+# Log all registered routes at startup (after all routes are defined)
+def log_registered_routes():
+    print("=== Registered Flask Routes ===")
+    for rule in app.url_map.iter_rules():
+        print(f"Route: {rule} Methods: {rule.methods}")
+
+# Will call this at the end of the file after all routes are registered
 
 # Initialize S3 client with retry configuration
 s3_client = boto3.client(
@@ -162,6 +172,42 @@ def summarize_text():
         }), 500
 
 
+@app.route("/summarize/<filename>", methods=["GET"])
+@retry_s3_operation(max_retries=3, delay=1, backoff=2)
+def summarize_file(filename):
+    """
+    GET endpoint to summarize text from an S3 file by filename in URL.
+    Example: /summarize/test.txt
+    """
+    try:
+        logger.info(f"Processing GET summarization request for file: {filename}")
+        try:
+            response = s3_client.get_object(Bucket=S3_BUCKET, Key=filename)
+            text = response['Body'].read().decode('utf-8')
+            summary = f"Summary for {filename}: " f"{text[:100]}{'...' if len(text) > 100 else ''}"
+            logger.info(f"Successfully processed file: {filename}")
+            return jsonify({
+                "status": "success",
+                "summary": summary,
+                "file_key": filename
+            }), 200
+        except s3_client.exceptions.NoSuchKey:
+            logger.error(f"File not found in S3: {filename}")
+            return jsonify({
+                "error": f"File not found: {filename}",
+                "status": "error"
+            }), 404
+        except ClientError as e:
+            error_code = e.response.get('Error', {}).get('Code', 'UnknownError')
+            logger.error(f"S3 error ({error_code}) for file {filename}: {str(e)}")
+            raise
+    except Exception as e:
+        logger.error(f"Unexpected error in summarize_file: {str(e)}")
+        return jsonify({
+            "status": "error",
+            "error": "Failed to process request"
+        }), 500
+
 # Error handlers
 @app.errorhandler(404)
 def not_found_error(error):
@@ -172,6 +218,8 @@ def not_found_error(error):
 def internal_error(error):
     return jsonify({"error": "Internal server error"}), 500
 
+
+log_registered_routes()
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8080))

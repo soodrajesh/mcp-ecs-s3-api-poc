@@ -77,6 +77,24 @@ jobs:
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         echo "image_uri=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
     
+    - name: Create CloudWatch Log Group if not exists
+      run: |
+        # Check if log group exists, if not create it
+        if ! aws logs describe-log-groups --log-group-name-prefix "/ecs/${{ env.ECS_CLUSTER }}" --region ${{ env.AWS_REGION }} | grep -q "logGroupName"; then
+          echo "Creating CloudWatch log group /ecs/${{ env.ECS_CLUSTER }}"
+          aws logs create-log-group \
+            --log-group-name "/ecs/${{ env.ECS_CLUSTER }}" \
+            --region ${{ env.AWS_REGION }}
+          
+          # Set retention policy (e.g., 14 days)
+          aws logs put-retention-policy \
+            --log-group-name "/ecs/${{ env.ECS_CLUSTER }}" \
+            --retention-in-days 14 \
+            --region ${{ env.AWS_REGION }}
+        else
+          echo "CloudWatch log group /ecs/${{ env.ECS_CLUSTER }} already exists"
+        fi
+
     - name: Deploy to ECS
       env:
         ECR_IMAGE_URI: ${{ steps.build-image.outputs.image_uri }}

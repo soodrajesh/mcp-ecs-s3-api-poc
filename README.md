@@ -144,6 +144,73 @@ If you encounter issues after deployment, here are some common problems and thei
    ```
 2. Verify the ECS task execution role has permissions to pull from ECR
 3. Check that the container image exists in ECR and is accessible
+4. **Check CloudWatch Log Group**:
+   - Ensure the CloudWatch log group exists and has the correct name format: `/ecs/<cluster-name>`
+   - The log group is automatically created by the CI/CD pipeline, but you can create it manually if needed:
+     ```bash
+     # Create the log group if it doesn't exist
+     aws logs create-log-group --log-group-name "/ecs/your-cluster-name" --region eu-west-1
+     
+     # Set retention policy (e.g., 14 days)
+     aws logs put-retention-policy --log-group-name "/ecs/your-cluster-name" --retention-in-days 14 --region eu-west-1
+     ```
+   - The ECS task definition should reference this log group in its log configuration
+
+### 4. Missing CloudWatch Log Group
+
+**Symptom**: ECS tasks fail with errors like "ResourceInitializationError: failed to validate logger args" or "The specified log group does not exist".
+
+**Solution**:
+1. **Using Terraform (Recommended)**:
+   The Terraform configuration includes a CloudWatch log group resource that's automatically created. Ensure this is properly applied:
+   ```hcl
+   resource "aws_cloudwatch_log_group" "mcp_logs" {
+     name              = "/ecs/${var.project_name}-${var.environment}"
+     retention_in_days = 14
+     tags = {
+       Name        = "${var.project_name}-${var.environment}-logs"
+       Environment = var.environment
+     }
+   }
+   ```
+
+2. **Manual Creation**:
+   If you need to create the log group manually:
+   ```bash
+   # Create the log group
+   aws logs create-log-group \
+     --log-group-name "/ecs/your-cluster-name" \
+     --region eu-west-1
+   
+   # Set retention policy (14 days)
+   aws logs put-retention-policy \
+     --log-group-name "/ecs/your-cluster-name" \
+     --retention-in-days 14 \
+     --region eu-west-1
+   ```
+
+3. **Verify in ECS Task Definition**:
+   Ensure the task definition's container definition points to the correct log group:
+   ```json
+   "logConfiguration": {
+     "logDriver": "awslogs",
+     "options": {
+       "awslogs-group": "/ecs/your-cluster-name",
+       "awslogs-region": "eu-west-1",
+       "awslogs-stream-prefix": "ecs"
+     }
+   }
+   ```
+
+### 5. Lambda Not Triggering on S3 Upload
+
+**Solution**:
+1. Check ECS service events for errors:
+   ```bash
+   aws ecs describe-services --cluster <cluster-name> --services <service-name> --region eu-west-1 --profile your-profile
+   ```
+2. Verify the ECS task execution role has permissions to pull from ECR
+3. Check that the container image exists in ECR and is accessible
 
 ### 4. Lambda Not Triggering on S3 Upload
 
